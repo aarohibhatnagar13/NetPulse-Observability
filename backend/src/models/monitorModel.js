@@ -1,50 +1,16 @@
-const db=require('../config/db');//Importing the DB
+const db = require('../config/db'); // Importing the DB Connection
 
-const logHeartbeat = async (monitorId, status, latency) => {
-    // 1. Check if monitorId is a number and > 0
-    if (!Number.isInteger(monitorId) || monitorId <= 0) {
-        throw new Error("Invalid monitorId: Must be a positive integer.");
-    }
-
-    // 2. Check if status is either 'up' or 'down'
-    if (!['up', 'down'].includes(status)) {
-        throw new Error("Invalid status: Must be either 'up' or 'down'.");
-    }
-
-    // 3. Check if latency is a number and >= 0
-    if (typeof latency !== 'number' || latency < 0) {
-        throw new Error("Invalid latency: Must be a non-negative number.");
-    }
-
-    console.log("Validation passed!");
-
-    // Phase 2: Secure SQL Construction
-    const sql = "INSERT INTO heartbeats (monitor_id, status, latency) VALUES (?, ?, ?)";
-
-    // Variables in the same order as the columns
-    const values = [monitorId, status, latency];
-
-    console.log("SQL Prepared:", sql);
-    console.log("Values to insert:", values);
-
-    try {
-        // Phase 3: Execute the query
-        await db.execute(sql, values);
-
-        console.log("Heartbeat saved successfully to DB");
-    } catch (error) {
-        // Handle DB errors (connection lost, etc.)
-        console.error("Database Error:", error.message);
-        throw error;
-    }
+// === 1. YOUR FUNCTION: Fetch all targets for the pinger loop ===
+const getAllMonitors = async () => {
+    const sql = 'SELECT * FROM monitors';
+    const [rows] = await db.execute(sql);
+    return rows;
 };
 
-
-
-//new function
-const getHeartbeatsByMonitor = async (monitorId) => {
+// === 2. YOUR FUNCTION (UPGRADED): Fetch the last 20 heartbeats for the graph ===
+const getMonitorHistory = async (monitorId) => {
     // Validation
-    if (!Number.isInteger(monitorId) || monitorId <= 0) {
+    if (!Number.isInteger(Number(monitorId)) || monitorId <= 0) {
         throw new Error("Invalid monitorId: Must be a positive integer.");
     }
 
@@ -53,19 +19,40 @@ const getHeartbeatsByMonitor = async (monitorId) => {
         FROM heartbeats
         WHERE monitor_id = ?
         ORDER BY created_at DESC
-        LIMIT 10
+        LIMIT 20
     `;
 
     const [rows] = await db.execute(sql, [monitorId]);
+    return rows.reverse(); // Reverse so oldest is first on the frontend graph!
+};
+// === 3. PARTNER's FUNCTION (FIXED): Securely log a new heartbeat AND update status ===
+const logHeartbeat = async (monitorId, status, latency) => {
+    if (!Number.isInteger(monitorId) || monitorId <= 0) {
+        throw new Error("Invalid monitorId: Must be a positive integer.");
+    }
+    if (!['up', 'down'].includes(status)) {
+        throw new Error("Invalid status: Must be either 'up' or 'down'.");
+    }
+    if (typeof latency !== 'number' || latency < 0) {
+        throw new Error("Invalid latency: Must be a non-negative number.");
+    }
 
-    return rows;
+    // Insert the heartbeat log
+    const insertSql = "INSERT INTO heartbeats (monitor_id, status, latency) VALUES (?, ?, ?)";
+    // Update the main dashboard status!
+    const updateSql = "UPDATE monitors SET status = ? WHERE id = ?";
+
+    try {
+        await db.execute(insertSql, [monitorId, status, latency]);
+        await db.execute(updateSql, [status, monitorId]); // <--- THIS WAS MISSING
+    } catch (error) {
+        console.error("Database Error:", error.message);
+        throw error;
+    }
 };
 
-
-
-//Third function
+// === 4. PARTNER's FUNCTION: Analytical summary ===
 const getMonitorSummary = async (monitorId) => {
-    // Validation
     if (!Number.isInteger(monitorId) || monitorId <= 0) {
         throw new Error("Invalid monitorId: Must be a positive integer.");
     }
@@ -78,12 +65,13 @@ const getMonitorSummary = async (monitorId) => {
         WHERE monitor_id = ?`;
 
     const [rows] = await db.execute(sql, [monitorId]);
-
     return rows[0];
 };
 
+// EXPORT ALL 4 SECURE FUNCTIONS
 module.exports = {
+    getAllMonitors,
+    getMonitorHistory,
     logHeartbeat,
-    getHeartbeatsByMonitor,
     getMonitorSummary
 };

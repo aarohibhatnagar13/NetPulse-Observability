@@ -1,6 +1,6 @@
 const {
     logHeartbeat,
-    getHeartbeatsByMonitor,
+    getMonitorHistory,
     getMonitorSummary
 } = require('../models/monitorModel');
 
