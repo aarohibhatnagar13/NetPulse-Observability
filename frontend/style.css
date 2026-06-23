@@ -360,3 +360,20 @@ body {
 
 .stat-value.up { color: var(--state-up); }
 .stat-value.down { color: var(--state-down); }
+
+.ping-btn {
+    background-color: var(--bg-hover);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.2s;
+}
+
+.ping-btn:hover {
+    background-color: var(--accent-blue);
+    color: white;
+    border-color: var(--accent-blue);
+}

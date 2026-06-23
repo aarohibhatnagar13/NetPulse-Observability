@@ -1,43 +1,75 @@
-/**
- * DATA SET 1: Mock Monitor Status (Phase 3)
- */
-const mockMonitors = [
-    { id: 1, name: "Main Web Server", target: "google.com", protocol: "HTTP", status: "UP", latency_ms: 45 },
-    { id: 2, name: "Payment API", target: "192.168.1.50", protocol: "ICMP", status: "DOWN", latency_ms: null },
-    { id: 3, name: "Customer Portal", target: "amazon.com", protocol: "HTTP", status: "UP", latency_ms: 120 },
-    { id: 4, name: "Database Cluster", target: "db.internal.net", protocol: "TCP", status: "UP", latency_ms: 5 }
-];
+// 1. Configuration: This defines the link to your partner's backend
+const API_BASE_URL = 'http://localhost:3000/api';
 
 /**
- * DATA SET 2: Mock Time-Series Latency (Phase 4)
+ * 2. LOAD DATA FROM BACKEND (GET)
+ * This replaces the mockMonitors array with real data from the database.
  */
-const mockHistory = [
-    { time: "10:00 AM", latency_ms: 45 },
-    { time: "10:05 AM", latency_ms: 48 },
-    { time: "10:10 AM", latency_ms: 52 },
-    { time: "10:15 AM", latency_ms: 300 }, // Spike!
-    { time: "10:20 AM", latency_ms: 0 }    // Down!
-];
+async function loadDashboardData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/monitors`);
+        if (!response.ok) throw new Error("Backend connection failed");
+        
+        const monitors = await response.json();
+        
+        // Pass the real data to our UI functions
+        renderMonitorCards(monitors);
+        updateSummary(monitors);
+        
+        // Update the header status
+        const engineStatus = document.querySelector('.engine-status');
+        if (engineStatus) {
+            engineStatus.innerHTML = '<div class="status-dot"></div> System Active';
+        }
+
+    } catch (error) {
+        console.error("Dashboard Load Error:", error);
+        const engineStatus = document.querySelector('.engine-status');
+        if (engineStatus) {
+            engineStatus.innerHTML = '<div class="status-dot" style="background-color: #ef4444;"></div> Engine Offline';
+        }
+    }
+}
 
 /**
- * PHASE 3: DOM Manipulation
- * This function builds the cards and injects them into your friend's CSS Grid.
+ * 3. LOAD CHART DATA FROM BACKEND (GET)
+ * This replaces mockHistory with real time-series data.
  */
-function renderMonitorCards() {
+async function loadChartData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/monitors/1/history`);
+        if (!response.ok) throw new Error("Chart fetch failed");
+        
+        const history = await response.json();
+        renderLatencyChart(history);
+    } catch (error) {
+        console.error("Chart Load Error:", error);
+    }
+}
+
+/**
+ * 4. RENDER MONITOR CARDS
+ */
+function renderMonitorCards(monitors) {
     const container = document.getElementById('status-container');
     if (!container) return;
 
     container.innerHTML = ''; // Clear previous content
 
-    mockMonitors.forEach(monitor => {
-        // Match the CSS classes your friend wrote: 'is-up' or 'is-down'
-        const stateClass = monitor.status === 'UP' ? 'is-up' : 'is-down';
-        const displayLatency = monitor.latency_ms !== null ? monitor.latency_ms : '--';
+    monitors.forEach(monitor => {
+        // 1. Determine if the monitor is healthy (Case-insensitive check)
+        const isUp = monitor.status && monitor.status.toLowerCase() === 'up';
+        
+        // 2. Set the CSS classes and text based on health
+        const stateClass = isUp ? 'is-up' : 'is-down';
+        const displayLatency = isUp ? (monitor.latency || 0) : '--';
+        const statusLabel = isUp ? 'UP' : 'DOWN';
 
-        // Create the card using your friend's exact HTML structure
+        // 3. Create the card element
         const card = document.createElement('div');
         card.className = `monitor-card ${stateClass}`;
         
+        // 4. Build the HTML inside the card
         card.innerHTML = `
             <div class="card-header">
                 <h3 class="monitor-name">${monitor.name}</h3>
@@ -49,45 +81,70 @@ function renderMonitorCards() {
             <div class="card-footer">
                 <div class="status-indicator">
                     <div class="dot"></div>
-                    <span>${monitor.status}</span>
+                    <span>${statusLabel}</span>
                 </div>
                 <div class="latency-metric">
                     <span class="value">${displayLatency}</span>
                     <span class="unit">ms</span>
                 </div>
+                <button class="ping-btn" onclick="triggerHeartbeat(${monitor.id}, '${monitor.status}')">
+                    Ping
+                </button>
             </div>
         `;
+        
         container.appendChild(card);
     });
 }
 
 /**
- * PHASE 4: Data Visualization (Chart.js)
+ * 5. UPDATE SUMMARY COUNTERS
  */
-function renderLatencyChart() {
+function updateSummary(monitors) {
+    const totalEl = document.getElementById('total-count');
+    const upEl = document.getElementById('up-count');
+    const downEl = document.getElementById('down-count');
+
+    if (totalEl && upEl && downEl) {
+        totalEl.textContent = monitors.length;
+        upEl.textContent = monitors.filter(m => m.status.toLowerCase() === 'up').length;
+        downEl.textContent = monitors.filter(m => m.status.toLowerCase() === 'down').length;
+    }
+}
+
+/**
+ * 6. DATA VISUALIZATION (Chart.js)
+ */
+let latencyChartInstance = null; // Store chart so we can destroy/rebuild on refresh
+
+function renderLatencyChart(historyData) {
     const ctx = document.getElementById('latency-chart');
     if (!ctx) return;
 
-    // Prepare data from Mock Set 2
-    const labels = mockHistory.map(item => item.time);
-    const dataPoints = mockHistory.map(item => item.latency_ms);
+    // Format data for Chart.js
+    const labels = historyData.map(h => {
+        const time = new Date(h.created_at);
+        return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    });
+    const dataPoints = historyData.map(h => h.latency);
 
-    new Chart(ctx, {
+    // If chart exists, destroy it before creating a new one (prevents glitching)
+    if (latencyChartInstance) {
+        latencyChartInstance.destroy();
+    }
+
+    latencyChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [{
                 label: 'Latency (ms)',
                 data: dataPoints,
-                borderColor: '#3b82f6', // Cisco Blue
+                borderColor: '#3b82f6',
                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
                 borderWidth: 2,
                 tension: 0.4,
-                fill: true,
-                pointBackgroundColor: (context) => {
-                    const val = context.dataset.data[context.dataIndex];
-                    return val === 0 ? '#ef4444' : '#10b981'; // Red if 0, Green if healthy
-                }
+                fill: true
             }]
         },
         options: {
@@ -102,29 +159,54 @@ function renderLatencyChart() {
     });
 }
 
-// Initialize the Dashboard
-function init() {
-    console.log("Observability Dashboard Initialized with Mock Data");
-    renderMonitorCards();
-    renderLatencyChart();
+/**
+ * 7. SEND HEARTBEAT (POST)
+ */
+async function triggerHeartbeat(id, currentStatus) {
+    // 1. Toggle logic: If it's down, we'll try to bring it 'up'. If it's up, we'll keep it 'up'.
+    const newStatus = 'up'; 
+    const newLatency = Math.floor(Math.random() * 60) + 10; // Random latency between 10-70ms
+
+    console.log(`📡 Manually pinging Monitor ${id}. Setting to ${newStatus}...`);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/heartbeat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                monitorId: id,
+                status: newStatus,
+                latency: newLatency
+            })
+        });
+
+        if (response.ok) {
+            console.log("✅ Heartbeat success!");
+            // 2. IMPORTANT: We must reload the data to see the change!
+            await loadDashboardData(); 
+            await loadChartData();
+        } else {
+            const errData = await response.json();
+            console.error("❌ Server rejected heartbeat:", errData.error);
+        }
+    } catch (err) {
+        console.error("🌐 Network Error:", err);
+    }
 }
 
-// Run when the page loads
+/**
+ * 8. INITIALIZE THE APP
+ */
+function init() {
+    console.log("NetPulse Observability Engine: LIVE MODE");
+    loadDashboardData();
+    loadChartData();
+
+    // Auto-refresh every 30 seconds
+    setInterval(() => {
+        loadDashboardData();
+        loadChartData();
+    }, 30000);
+}
+
 document.addEventListener('DOMContentLoaded', init);
-
-function updateSummary() {
-    const total = mockMonitors.length;
-    const up = mockMonitors.filter(m => m.status === 'UP').length;
-    const down = mockMonitors.filter(m => m.status === 'DOWN').length;
-
-    document.getElementById('total-count').textContent = total;
-    document.getElementById('up-count').textContent = up;
-    document.getElementById('down-count').textContent = down;
-}
-
-// Update your init function to include this:
-function init() {
-    renderMonitorCards();
-    renderLatencyChart();
-    updateSummary(); // <--- Add this
-}
