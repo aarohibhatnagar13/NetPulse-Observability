@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Observability</title>
+    <title>NetPulse | Network Observability Dashboard</title>
     <!-- Professional Sans-Serif Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -16,7 +16,7 @@
         <aside class="sidebar">
             <div class="brand">
                 <div class="brand-square"></div>
-                <span>Cisco Engine</span>
+                <span>NetPulse Engine</span>
             </div>
             
             <nav class="menu">
@@ -50,18 +50,19 @@
             <div class="workspace">
                 <!-- Summary Row -->
                 <div class="summary-row">
-                    <div class="summary-card">
-                        <h3>Total Endpoints</h3>
-                        <p id="total-endpoints">0</p>
+                    <div class="stat-card">
+                        <span class="stat-label">Total Endpoints</span>
+                        <span class="stat-value" id="total-count">0</span>
                     </div>
-                    <div class="summary-card">
-                        <h3>Average Latency (ms)</h3>
-                        <p id="avg-latency">0</p>
+                    <div class="stat-card">
+                        <span class="stat-label">Currently UP</span>
+                        <span class="stat-value up" id="up-count">0</span>
                     </div>
-                    <div class="summary-card">
-                        <h3>Active Alerts</h3>
-                        <p id="active-alerts">0</p>
+                    <div class="stat-card">
+                        <span class="stat-label">Currently DOWN</span>
+                        <span class="stat-value down" id="down-count">0</span>
                     </div>
+                </div>
 
                 
                 <!-- 1. The Dynamic Cards Grid -->
