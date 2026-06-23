@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Observability</title>
+    <!-- Professional Sans-Serif Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- Fixed Left Sidebar -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-square"></div>
+                <span>Cisco Engine</span>
+            </div>
+            
+            <nav class="menu">
+                <div class="menu-label">DASHBOARDS</div>
+                <a href="#" class="menu-item active">Overview</a>
+                <a href="#" class="menu-item">Uptime Logs</a>
+                <a href="#" class="menu-item">Metrics</a>
+                
+                <div class="menu-label" style="margin-top: 30px;">SYSTEM</div>
+                <a href="#" class="menu-item">Configuration</a>
+                <a href="#" class="menu-item">Alert Rules</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- Top Header -->
+            <header class="topbar">
+                <div class="header-text">
+                    <h1>Network Overview</h1>
+                    <p>Live endpoint monitoring and latency metrics</p>
+                </div>
+                <div class="engine-status">
+                    <div class="status-dot"></div>
+                    System Active
+                </div>
+            </header>
+
+            <!-- Workspace containing Cards and Chart -->
+            <div class="workspace">
+                
+                <!-- 1. The Dynamic Cards Grid -->
+                <div id="status-container" class="status-grid">
+                    <!-- JS will automatically inject cards here -->
+                </div>
+
+                <!-- 2. The Latency Graph Panel -->
+                <div class="chart-panel">
+                    <div class="panel-header">
+                        <h2>Latency History (ms)</h2>
+                        <span class="badge">Last 20 Pings</span>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="latency-chart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- 1. Import Chart.js Library First -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- 2. Run your custom logic -->
+    <script src="app.js"></script>
+</body>
+</html>

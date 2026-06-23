@@ -1,0 +1,330 @@
+/* --- 1. STRICT COLOR PALETTE --- */
+:root {
+    /* Backgrounds */
+    --bg-base: #09090b;      /* Deepest gray/black */
+    --bg-panel: #18181b;     /* Slightly lighter gray for sidebars/cards */
+    --bg-hover: #27272a;     /* Hover states */
+    
+    /* Borders */
+    --border-subtle: #27272a;/* Sharp, crisp separation lines */
+    
+    /* Typography */
+    --text-main: #fafafa;    /* Bright white for data/headers */
+    --text-muted: #a1a1aa;   /* Muted gray for labels/subtitles */
+    
+    /* Brand Colors */
+    --accent-blue: #3b82f6;  /* Standard tech blue */
+    --accent-green: #10b981; /* Healthy status */
+}
+
+/* --- 2. GLOBAL RESET --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, sans-serif;
+}
+
+body {
+    background-color: var(--bg-base);
+    color: var(--text-main);
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* --- 3. BASE LAYOUT (Flexbox) --- */
+.app-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* --- 4. SIDEBAR --- */
+.sidebar {
+    width: 250px;
+    background-color: var(--bg-panel);
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+}
+
+.brand {
+    height: 70px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+}
+
+.brand-square {
+    width: 16px;
+    height: 16px;
+    background-color: var(--accent-blue);
+    border-radius: 3px;
+}
+
+.menu {
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.menu-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    padding-left: 8px;
+}
+
+.menu-item {
+    text-decoration: none;
+    color: var(--text-muted);
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.menu-item:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-main);
+}
+
+.menu-item.active {
+    background-color: rgba(59, 130, 246, 0.1);
+    color: var(--accent-blue);
+}
+
+/* --- 5. MAIN CONTENT & TOPBAR --- */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar {
+    height: 70px;
+    padding: 0 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+    background-color: var(--bg-base);
+}
+
+.topbar h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.topbar p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Simple, clean engine status */
+.engine-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    padding: 6px 12px;
+    border-radius: 4px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--accent-green);
+    border-radius: 50%;
+}
+
+/* --- 6. WORKSPACE --- */
+.workspace {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 32px; 
+}
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    width: 100%;
+}
+
+.chart-panel {
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-height: 350px; /* Gives the chart room to breathe */
+    width: 100%;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-header h2 {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.badge {
+    background-color: var(--bg-base);
+    border: 1px solid var(--border-subtle);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* The wrapper that holds the canvas element */
+.chart-container {
+    flex: 1; /* Pushes the canvas to fill the rest of the panel */
+    position: relative;
+    width: 100%;
+}
+
+/* --- PHASE 3: MONITOR CARDS & STATE DESIGN --- */
+
+:root {
+    /* Status Colors for the cards */
+    --state-up: #10b981;   /* Emerald Green */
+    --state-down: #ef4444; /* Crimson Red */
+}
+
+/* Base Card Styling */
+.monitor-card {
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transition: border-color 0.2s ease;
+}
+
+/* Subtle interactive effect without being flashy */
+.monitor-card:hover {
+    border-color: #3f3f46;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.monitor-name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.protocol-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background-color: var(--bg-base);
+    border: 1px solid var(--border-subtle);
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: var(--text-muted);
+}
+
+.card-body {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.target-url {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: monospace; /* Gives a technical, developer-friendly look */
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Base status indicator text */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.status-indicator .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.latency-metric .value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.latency-metric .unit {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+
+/* --- STATE MODIFIERS (The Magic) --- */
+
+/* 1. When the card is UP */
+.monitor-card.is-up {
+    /* Adds a sleek green accent line at the top of the card */
+    border-top: 2px solid var(--state-up);
+}
+.monitor-card.is-up .status-indicator {
+    color: var(--state-up);
+}
+.monitor-card.is-up .dot {
+    background-color: var(--state-up);
+}
+
+/* 2. When the card is DOWN */
+.monitor-card.is-down {
+    /* Adds a red accent line, and a very faint red warning background */
+    border-top: 2px solid var(--state-down);
+    background-color: rgba(239, 68, 68, 0.03); 
+}
+.monitor-card.is-down .status-indicator {
+    color: var(--state-down);
+}
+.monitor-card.is-down .dot {
+    background-color: var(--state-down);
+}
+.monitor-card.is-down .latency-metric .value {
+    color: var(--state-down); /* Make the latency text red to show failure */
+}
